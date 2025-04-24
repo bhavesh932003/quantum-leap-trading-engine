@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -25,8 +24,11 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 const Header: React.FC = () => {
+  const navigate = useNavigate();
   const currentTime = new Date().toLocaleTimeString();
   const [time, setTime] = React.useState(currentTime);
   const [connectionStatus, setConnectionStatus] = React.useState('connected');
@@ -40,6 +42,11 @@ const Header: React.FC = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
 
   return (
     <header className="bg-hft-background-panel border-b border-gray-800 py-2 px-4">
@@ -155,7 +162,7 @@ const Header: React.FC = () => {
                 <HelpCircle size={16} className="mr-2" /> Help
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

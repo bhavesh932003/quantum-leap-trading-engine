@@ -9,7 +9,134 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          created_at: string | null
+          filled_price: number | null
+          filled_quantity: number | null
+          id: string
+          price: number | null
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"] | null
+          strategy: string | null
+          symbol: string
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          filled_price?: number | null
+          filled_quantity?: number | null
+          id?: string
+          price?: number | null
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status?: Database["public"]["Enums"]["order_status"] | null
+          strategy?: string | null
+          symbol: string
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          filled_price?: number | null
+          filled_quantity?: number | null
+          id?: string
+          price?: number | null
+          quantity?: number
+          side?: Database["public"]["Enums"]["order_side"]
+          status?: Database["public"]["Enums"]["order_status"] | null
+          strategy?: string | null
+          symbol?: string
+          type?: Database["public"]["Enums"]["order_type"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      positions: {
+        Row: {
+          average_price: number
+          created_at: string | null
+          id: string
+          quantity: number
+          realized_pnl: number | null
+          symbol: string
+          unrealized_pnl: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          average_price: number
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          realized_pnl?: number | null
+          symbol: string
+          unrealized_pnl?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          average_price?: number
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          realized_pnl?: number | null
+          symbol?: string
+          unrealized_pnl?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string | null
+          pnl: number | null
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          pnl?: number | null
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          pnl?: number | null
+          price?: number
+          quantity?: number
+          side?: Database["public"]["Enums"]["order_side"]
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +145,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      order_side: "buy" | "sell"
+      order_status: "pending" | "filled" | "cancelled" | "partial"
+      order_type: "market" | "limit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +262,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      order_side: ["buy", "sell"],
+      order_status: ["pending", "filled", "cancelled", "partial"],
+      order_type: ["market", "limit"],
+    },
   },
 } as const
