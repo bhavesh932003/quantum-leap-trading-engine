@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				hft: {
+					buy: '#3498db',
+					sell: '#e74c3c',
+					profit: '#2ecc71',
+					loss: '#e74c3c',
+					warning: '#e67e22',
+					neutral: '#95a5a6',
+					highlight: '#f39c12',
+					background: {
+						dark: '#121212',
+						light: '#ffffff',
+						panel: '#1e1e1e',
+					},
 				}
 			},
 			borderRadius: {
@@ -84,11 +99,43 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': {
+						opacity: '0.7',
+						boxShadow: '0 0 5px rgba(46, 204, 113, 0.7)'
+					},
+					'50%': {
+						opacity: '1',
+						boxShadow: '0 0 15px rgba(46, 204, 113, 1)'
+					},
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0)'
+					},
+					'50%': {
+						transform: 'translateY(-5px)'
+					},
+				},
+				'flash-once': {
+					'0%': {
+						backgroundColor: 'transparent'
+					},
+					'50%': {
+						backgroundColor: 'rgba(46, 204, 113, 0.2)'
+					},
+					'100%': {
+						backgroundColor: 'transparent'
+					},
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 1.5s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'flash-once': 'flash-once 1s ease-out forwards',
 			}
 		}
 	},

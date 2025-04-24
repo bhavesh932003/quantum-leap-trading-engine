@@ -1,13 +1,27 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import MarketOverview from '@/components/dashboard/MarketOverview';
+import OrderBook from '@/components/dashboard/OrderBook';
+import PnLChart from '@/components/dashboard/PnLChart';
+import ActiveOrders from '@/components/dashboard/ActiveOrders';
+import SystemMetrics from '@/components/dashboard/SystemMetrics';
+import OrderEntry from '@/components/dashboard/OrderEntry';
+import PositionOverview from '@/components/dashboard/PositionOverview';
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <DashboardLayout>
+      <div className="grid grid-cols-12 gap-4">
+        <PnLChart />
+        <SystemMetrics />
+        <OrderBook />
+        <OrderEntry />
+        <PositionOverview />
+        <MarketOverview />
+        <ActiveOrders />
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
