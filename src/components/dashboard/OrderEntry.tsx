@@ -156,8 +156,9 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
                 <SelectItem value="momentum-a">Momentum-A</SelectItem>
                 <SelectItem value="mean-rev">Mean Reversion</SelectItem>
                 <SelectItem value="breakout-3">Breakout-3</SelectItem>
-              </Select>
-            </div>
+              </SelectContent>
+            </Select>
+          </div>
             
           <div className="flex items-center text-sm text-hft-warning bg-hft-warning/10 p-2 rounded-md mb-2">
             <AlertTriangle size={16} className="mr-2" />
