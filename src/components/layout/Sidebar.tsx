@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { 
   BarChart3, 
@@ -10,21 +10,23 @@ import {
   History, 
   AlertTriangle, 
   ChevronRight, 
-  ChevronLeft,
-  PanelLeft
+  ChevronLeft
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarNavItemProps {
   icon: React.ReactNode;
   label: string;
+  path: string;
   active?: boolean;
   onClick?: () => void;
 }
 
 const SidebarNavItem: React.FC<SidebarNavItemProps> = ({ 
   icon, 
-  label, 
+  label,
+  path,
   active = false,
   onClick
 }) => {
@@ -46,18 +48,30 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
 
 const Sidebar: React.FC = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(isMobile);
-  const [activeItem, setActiveItem] = useState('Dashboard');
+  
+  // Determine which nav item is active based on the current path
+  const getIsActive = (path: string): boolean => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
   
   const navItems = [
-    { label: 'Dashboard', icon: <BarChart3 size={18} /> },
-    { label: 'Order Book', icon: <PackageOpen size={18} /> },
-    { label: 'Market Data', icon: <LineChart size={18} /> },
-    { label: 'Trading', icon: <AreaChart size={18} /> },
-    { label: 'History', icon: <History size={18} /> },
-    { label: 'Risk Management', icon: <AlertTriangle size={18} /> },
-    { label: 'Settings', icon: <Settings size={18} /> }
+    { label: 'Dashboard', icon: <BarChart3 size={18} />, path: '/' },
+    { label: 'Order Book', icon: <PackageOpen size={18} />, path: '/orderbook' },
+    { label: 'Market Data', icon: <LineChart size={18} />, path: '/market-data' },
+    { label: 'Trading', icon: <AreaChart size={18} />, path: '/trading' },
+    { label: 'History', icon: <History size={18} />, path: '/history' },
+    { label: 'Risk Management', icon: <AlertTriangle size={18} />, path: '/risk' },
+    { label: 'Settings', icon: <Settings size={18} />, path: '/settings' }
   ];
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <aside 
@@ -73,11 +87,11 @@ const Sidebar: React.FC = () => {
               <button
                 className={cn(
                   "w-full flex justify-center p-3 text-sm font-medium rounded-md transition-colors",
-                  activeItem === item.label 
+                  getIsActive(item.path) 
                     ? "bg-hft-buy/20 text-white" 
                     : "text-gray-400 hover:text-white hover:bg-gray-800"
                 )}
-                onClick={() => setActiveItem(item.label)}
+                onClick={() => handleNavigation(item.path)}
               >
                 {item.icon}
               </button>
@@ -85,8 +99,9 @@ const Sidebar: React.FC = () => {
               <SidebarNavItem
                 icon={item.icon}
                 label={item.label}
-                active={activeItem === item.label}
-                onClick={() => setActiveItem(item.label)}
+                path={item.path}
+                active={getIsActive(item.path)}
+                onClick={() => handleNavigation(item.path)}
               />
             )}
           </div>

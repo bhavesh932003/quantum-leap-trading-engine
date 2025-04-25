@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,26 @@ import {
 import { ArrowRight, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrderEntryProps {
   className?: string;
 }
+
+// Simulate real-time market prices
+const getMarketPrice = (symbol: string): number => {
+  const basePrice: Record<string, number> = {
+    'AAPL': 198.50,
+    'MSFT': 420.55,
+    'TSLA': 210.25,
+    'NVDA': 873.22,
+    'GOOG': 172.88
+  };
+  
+  // Add some random price movement
+  const randomOffset = (Math.random() - 0.5) * 2;
+  return parseFloat((basePrice[symbol] + randomOffset).toFixed(2)) || 0;
+};
 
 const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
   const { toast } = useToast();
@@ -27,8 +43,38 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
   const [price, setPrice] = useState('198.50');
   const [strategy, setStrategy] = useState('manual');
   const [submitting, setSubmitting] = useState(false);
+  const [marketPrice, setMarketPrice] = useState(getMarketPrice('AAPL'));
+  
+  // Simulate real-time market data updates
+  useEffect(() => {
+    const newPrice = getMarketPrice(symbol);
+    setMarketPrice(newPrice);
+    if (orderType === 'market') {
+      setPrice(newPrice.toString());
+    }
+    
+    // Update price every 2 seconds to simulate real-time data
+    const interval = setInterval(() => {
+      const newPrice = getMarketPrice(symbol);
+      setMarketPrice(newPrice);
+      if (orderType === 'market') {
+        setPrice(newPrice.toString());
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [symbol, orderType]);
+  
+  // Update price when symbol changes
+  useEffect(() => {
+    const newPrice = getMarketPrice(symbol);
+    setMarketPrice(newPrice);
+    if (orderType === 'market') {
+      setPrice(newPrice.toString());
+    }
+  }, [symbol]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Simple validation
@@ -43,15 +89,108 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
     
     setSubmitting(true);
     
-    // Simulate order submission
-    setTimeout(() => {
+    // Prepare order data
+    const orderData = {
+      symbol,
+      side,
+      type: orderType,
+      quantity: parseFloat(quantity),
+      price: parseFloat(price),
+      strategy,
+      status: 'pending'
+    };
+    
+    try {
+      const { data: order, error } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Simulate order execution
+      setTimeout(async () => {
+        // Update the order to filled status
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({ 
+            status: 'filled',
+            filled_quantity: parseFloat(quantity),
+            filled_price: parseFloat(price)
+          })
+          .eq('id', order.id);
+        
+        if (updateError) throw updateError;
+        
+        // Create position or update existing position
+        const { data: existingPosition } = await supabase
+          .from('positions')
+          .select()
+          .eq('symbol', symbol)
+          .single();
+        
+        if (existingPosition) {
+          let newQuantity, newAveragePrice;
+          
+          if (side === 'buy') {
+            const totalValue = existingPosition.quantity * existingPosition.average_price + 
+                              parseFloat(quantity) * parseFloat(price);
+            newQuantity = existingPosition.quantity + parseFloat(quantity);
+            newAveragePrice = totalValue / newQuantity;
+          } else {
+            newQuantity = existingPosition.quantity - parseFloat(quantity);
+            newAveragePrice = existingPosition.average_price;
+          }
+          
+          await supabase
+            .from('positions')
+            .update({
+              quantity: newQuantity,
+              average_price: newAveragePrice,
+              updated_at: new Date()
+            })
+            .eq('id', existingPosition.id);
+        } else if (side === 'buy') {
+          await supabase
+            .from('positions')
+            .insert({
+              symbol,
+              quantity: parseFloat(quantity),
+              average_price: parseFloat(price)
+            });
+        }
+        
+        // Record trade in history
+        await supabase
+          .from('trade_history')
+          .insert({
+            order_id: order.id,
+            symbol,
+            side,
+            quantity: parseFloat(quantity),
+            price: parseFloat(price)
+          });
+        
+        // Show success notification
+        toast({
+          title: "Order Executed",
+          description: `${side.toUpperCase()} ${quantity} ${symbol} @ ${orderType === 'market' ? 'MARKET ' + price : '$' + price}`,
+          variant: "default",
+        });
+        
+        setSubmitting(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error executing order:', error);
       toast({
-        title: "Order Submitted",
-        description: `${side.toUpperCase()} ${quantity} ${symbol} @ ${orderType === 'market' ? 'MARKET' : '$' + price}`,
-        variant: "default",
+        title: "Order Failed",
+        description: "There was a problem executing your order",
+        variant: "destructive",
       });
       setSubmitting(false);
-    }, 1000);
+    }
   };
   
   return (
@@ -132,18 +271,26 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
             </div>
           </div>
           
-          {orderType === 'limit' && (
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Price</label>
-              <Input 
-                type="number" 
-                step="0.01" 
-                value={price} 
-                onChange={(e) => setPrice(e.target.value)}
-                className="bg-gray-800 border-gray-700"
-              />
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <label className="text-sm text-muted-foreground">
+                {orderType === 'market' ? 'Market Price' : 'Price'}
+              </label>
+              {orderType === 'market' && (
+                <span className="text-sm text-hft-highlight animate-pulse">
+                  Live
+                </span>
+              )}
             </div>
-          )}
+            <Input 
+              type="number" 
+              step="0.01" 
+              value={price} 
+              onChange={(e) => setPrice(e.target.value)}
+              className="bg-gray-800 border-gray-700"
+              readOnly={orderType === 'market'}
+            />
+          </div>
           
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">Strategy</label>

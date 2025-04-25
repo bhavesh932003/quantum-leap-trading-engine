@@ -5,7 +5,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import OrderBookPage from "./pages/OrderBookPage";
+import MarketDataPage from "./pages/MarketDataPage";
+import TradingPage from "./pages/TradingPage";
+import HistoryPage from "./pages/HistoryPage";
+import RiskManagementPage from "./pages/RiskManagementPage";
+import SettingsPage from "./pages/SettingsPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import React from "react";
@@ -39,7 +45,37 @@ const AppContent = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
               <ProtectedRoute>
-                <Index />
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/orderbook" element={
+              <ProtectedRoute>
+                <OrderBookPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/market-data" element={
+              <ProtectedRoute>
+                <MarketDataPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/trading" element={
+              <ProtectedRoute>
+                <TradingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/history" element={
+              <ProtectedRoute>
+                <HistoryPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/risk" element={
+              <ProtectedRoute>
+                <RiskManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
