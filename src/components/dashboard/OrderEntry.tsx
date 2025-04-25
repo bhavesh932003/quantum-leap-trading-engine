@@ -14,6 +14,12 @@ import { ArrowRight, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Database } from '@/integrations/supabase/types';
+
+type OrderSide = Database['public']['Enums']['order_side'];
+type OrderType = Database['public']['Enums']['order_type'];
+type OrderStatus = Database['public']['Enums']['order_status'];
 
 interface OrderEntryProps {
   className?: string;
@@ -36,9 +42,10 @@ const getMarketPrice = (symbol: string): number => {
 
 const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [symbol, setSymbol] = useState('AAPL');
-  const [side, setSide] = useState('buy');
-  const [orderType, setOrderType] = useState('market');
+  const [side, setSide] = useState<OrderSide>('buy');
+  const [orderType, setOrderType] = useState<OrderType>('market');
   const [quantity, setQuantity] = useState('100');
   const [price, setPrice] = useState('198.50');
   const [strategy, setStrategy] = useState('manual');
@@ -86,18 +93,29 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
       });
       return;
     }
+
+    // Ensure user is logged in
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to place orders",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setSubmitting(true);
     
-    // Prepare order data
+    // Prepare order data with correct types
     const orderData = {
       symbol,
-      side,
-      type: orderType,
+      side: side as OrderSide,
+      type: orderType as OrderType,
       quantity: parseFloat(quantity),
       price: parseFloat(price),
       strategy,
-      status: 'pending'
+      status: 'pending' as OrderStatus,
+      user_id: user.id
     };
     
     try {
@@ -115,9 +133,10 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
         const { error: updateError } = await supabase
           .from('orders')
           .update({ 
-            status: 'filled',
+            status: 'filled' as OrderStatus,
             filled_quantity: parseFloat(quantity),
-            filled_price: parseFloat(price)
+            filled_price: parseFloat(price),
+            updated_at: new Date().toISOString()
           })
           .eq('id', order.id);
         
@@ -128,6 +147,7 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
           .from('positions')
           .select()
           .eq('symbol', symbol)
+          .eq('user_id', user.id)
           .single();
         
         if (existingPosition) {
@@ -148,7 +168,7 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
             .update({
               quantity: newQuantity,
               average_price: newAveragePrice,
-              updated_at: new Date()
+              updated_at: new Date().toISOString()
             })
             .eq('id', existingPosition.id);
         } else if (side === 'buy') {
@@ -157,7 +177,8 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
             .insert({
               symbol,
               quantity: parseFloat(quantity),
-              average_price: parseFloat(price)
+              average_price: parseFloat(price),
+              user_id: user.id
             });
         }
         
@@ -167,9 +188,10 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
           .insert({
             order_id: order.id,
             symbol,
-            side,
+            side: side as OrderSide,
             quantity: parseFloat(quantity),
-            price: parseFloat(price)
+            price: parseFloat(price),
+            user_id: user.id
           });
         
         // Show success notification
@@ -249,7 +271,7 @@ const OrderEntry: React.FC<OrderEntryProps> = ({ className }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">Order Type</label>
-              <Select value={orderType} onValueChange={setOrderType}>
+              <Select value={orderType} onValueChange={(value) => setOrderType(value as OrderType)}>
                 <SelectTrigger className="bg-gray-800 border-gray-700">
                   <SelectValue placeholder="Order Type" />
                 </SelectTrigger>
